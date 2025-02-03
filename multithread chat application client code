@@ -1,0 +1,56 @@
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+public class ChatClient {
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int PORT = 12345;
+    private static Socket socket;
+    private static PrintWriter out;
+    private static BufferedReader in;
+
+    public static void main(String[] args) {
+        try {
+            socket = new Socket(SERVER_ADDRESS, PORT);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Read server's welcome message
+            String serverMessage = in.readLine();
+            System.out.println(serverMessage);
+
+            // Get client's name
+            Scanner scanner = new Scanner(System.in);
+            String name = scanner.nextLine();
+            out.println(name);
+
+            // Start a new thread to listen for messages from the server
+            Thread listenThread = new Thread(new ListenTask());
+            listenThread.start();
+
+            // Allow the user to send messages
+            String message;
+            while (true) {
+                message = scanner.nextLine();
+                out.println(message);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Task for listening to incoming messages from the server
+    private static class ListenTask implements Runnable {
+        @Override
+        public void run() {
+            try {
+                String serverMessage;
+                while ((serverMessage = in.readLine()) != null) {
+                    System.out.println(serverMessage);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
